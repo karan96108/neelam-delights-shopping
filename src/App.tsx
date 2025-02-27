@@ -39,7 +39,9 @@ const App = () => (
                 <Route path="/shipping-returns" element={<ShippingReturns />} />
                 <Route path="/shipping" element={<Navigate to="/shipping-returns" replace />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
                 <Route path="/terms-conditions" element={<TermsConditions />} />
+                <Route path="/terms" element={<Navigate to="/terms-conditions" replace />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/checkout" element={<Checkout />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
