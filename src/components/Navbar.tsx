@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { totalItems, toggleCart } = useCart();
+  const { user } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -49,6 +51,23 @@ const Navbar: React.FC = () => {
           </nav>
 
           <div className="flex items-center space-x-4">
+            {user ? (
+              <Link 
+                to="/profile" 
+                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Profile"
+              >
+                <User className="h-6 w-6" />
+              </Link>
+            ) : (
+              <Link 
+                to="/auth" 
+                className="font-medium transition-colors hover:text-primary hidden md:block"
+              >
+                Login
+              </Link>
+            )}
+            
             <button 
               onClick={toggleCart}
               className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -106,6 +125,24 @@ const Navbar: React.FC = () => {
             >
               Contact
             </Link>
+            {!user && (
+              <Link 
+                to="/auth" 
+                className="font-medium py-2 transition-colors hover:text-primary"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+            )}
+            {user && (
+              <Link 
+                to="/profile" 
+                className="font-medium py-2 transition-colors hover:text-primary"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                My Profile
+              </Link>
+            )}
           </nav>
         </div>
       )}
