@@ -13,6 +13,8 @@ interface AuthContextProps {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
+  verifyOtp: (email: string, token: string) => Promise<void>;
+  requestOtp: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -99,9 +101,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
+        // Request OTP after signup
+        await requestOtp(email);
+        
         toast({
           title: "Registration successful",
-          description: "Please check your email for the confirmation link.",
+          description: "Please check your email for the verification code.",
         });
       }
     } catch (error: any) {
@@ -188,6 +193,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // New method to request OTP via email
+  const requestOtp = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          // This creates an OTP that can only be used for verification, not login
+          shouldCreateUser: false,
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Verification code sent",
+        description: "Please check your email for the verification code.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to send verification code",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  // New method to verify OTP
+  const verifyOtp = async (email: string, token: string) => {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email',
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Email verified",
+        description: "Your email has been successfully verified.",
+      });
+
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Verification failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const value = {
     session,
     user,
@@ -197,6 +260,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     updateProfile,
+    requestOtp,
+    verifyOtp,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

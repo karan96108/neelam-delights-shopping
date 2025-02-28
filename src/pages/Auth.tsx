@@ -11,7 +11,7 @@ import { toast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, requestOtp, verifyOtp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
   // Form states
@@ -22,6 +22,11 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  
+  // OTP verification states
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [emailForOtp, setEmailForOtp] = useState('');
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -60,17 +65,95 @@ const Auth = () => {
     
     try {
       await signUp(registerEmail, registerPassword, firstName, lastName);
-      // Don't navigate - user needs to confirm their email
-      toast({
-        title: "Registration successful",
-        description: "Please check your email for the confirmation link.",
-      });
+      // Store the email for OTP verification
+      setEmailForOtp(registerEmail);
+      // Show OTP verification form
+      setShowOtpVerification(true);
     } catch (error) {
       console.error('Registration error:', error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      await verifyOtp(emailForOtp, otpCode);
+      toast({
+        title: "Email verified",
+        description: "Your account has been created successfully. You can now login.",
+      });
+      setShowOtpVerification(false);
+    } catch (error) {
+      console.error('OTP verification error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    
+    try {
+      await requestOtp(emailForOtp);
+      toast({
+        title: "Code resent",
+        description: "A new verification code has been sent to your email.",
+      });
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // If showing OTP verification form
+  if (showOtpVerification) {
+    return (
+      <div className="container max-w-md mx-auto pt-32 pb-16 px-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-serif">Verify Your Email</CardTitle>
+            <CardDescription>
+              Enter the verification code sent to {emailForOtp}
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleVerifyOtp}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Verification Code</Label>
+                <Input 
+                  id="otp" 
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  required
+                  placeholder="Enter the 6-digit code"
+                  autoComplete="one-time-code"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col sm:flex-row gap-3">
+              <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
+                {isLoading ? "Verifying..." : "Verify"}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleResendOtp}
+                className="w-full sm:w-auto"
+                disabled={isLoading}
+              >
+                Resend Code
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-md mx-auto pt-32 pb-16 px-4">
