@@ -13,7 +13,7 @@ interface AuthContextProps {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
-  verifyOtp: (email: string, token: string) => Promise<void>;
+  verifyOtp: (email: string, token: string) => Promise<{ user: User | null; session: Session | null }>;
   requestOtp: (email: string) => Promise<void>;
 }
 
