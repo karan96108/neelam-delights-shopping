@@ -15,9 +15,9 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Form states
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPhone, setLoginPhone] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPhone, setRegisterPhone] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -26,7 +26,7 @@ const Auth = () => {
   // OTP verification states
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [emailForOtp, setEmailForOtp] = useState('');
+  const [phoneForOtp, setPhoneForOtp] = useState('');
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -40,7 +40,7 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      await signIn(loginEmail, loginPassword);
+      await signIn(loginPhone, loginPassword);
       navigate('/');
     } catch (error) {
       console.error('Login error:', error);
@@ -64,9 +64,9 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      await signUp(registerEmail, registerPassword, firstName, lastName);
-      // Store the email for OTP verification
-      setEmailForOtp(registerEmail);
+      await signUp(registerPhone, registerPassword, firstName, lastName);
+      // Store the phone for OTP verification
+      setPhoneForOtp(registerPhone);
       // Show OTP verification form
       setShowOtpVerification(true);
     } catch (error) {
@@ -81,9 +81,9 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      await verifyOtp(emailForOtp, otpCode);
+      await verifyOtp(phoneForOtp, otpCode);
       toast({
-        title: "Email verified",
+        title: "Phone verified",
         description: "Your account has been created successfully. You can now login.",
       });
       setShowOtpVerification(false);
@@ -98,10 +98,10 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      await requestOtp(emailForOtp);
+      await requestOtp(phoneForOtp);
       toast({
         title: "Code resent",
-        description: "A new verification code has been sent to your email.",
+        description: "A new verification code has been sent to your phone.",
       });
     } catch (error) {
       console.error('Resend OTP error:', error);
@@ -116,9 +116,9 @@ const Auth = () => {
       <div className="container max-w-md mx-auto pt-32 pb-16 px-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl font-serif">Verify Your Email</CardTitle>
+            <CardTitle className="text-2xl font-serif">Verify Your Phone</CardTitle>
             <CardDescription>
-              Enter the verification code sent to {emailForOtp}
+              Enter the verification code sent to {phoneForOtp}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleVerifyOtp}>
@@ -168,21 +168,24 @@ const Auth = () => {
             <CardHeader>
               <CardTitle className="text-2xl font-serif">Welcome Back</CardTitle>
               <CardDescription>
-                Enter your email and password to sign in to your account.
+                Enter your phone number and password to sign in to your account.
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleLogin}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="phone">Phone Number</Label>
                   <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@example.com" 
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
+                    id="phone" 
+                    type="tel" 
+                    placeholder="+1 (555) 123-4567" 
+                    value={loginPhone}
+                    onChange={(e) => setLoginPhone(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Format: +1 (country code) followed by your number
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -239,15 +242,18 @@ const Auth = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="registerEmail">Email</Label>
+                  <Label htmlFor="registerPhone">Phone Number</Label>
                   <Input 
-                    id="registerEmail" 
-                    type="email" 
-                    placeholder="name@example.com" 
-                    value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    id="registerPhone" 
+                    type="tel" 
+                    placeholder="+1 (555) 123-4567" 
+                    value={registerPhone}
+                    onChange={(e) => setRegisterPhone(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Format: +1 (country code) followed by your number
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="registerPassword">Password</Label>

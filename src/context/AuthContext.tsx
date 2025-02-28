@@ -9,12 +9,12 @@ interface AuthContextProps {
   user: User | null;
   profile: any | null;
   isLoading: boolean;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (phone: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  signIn: (phone: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
-  verifyOtp: (email: string, token: string) => Promise<{ user: User | null; session: Session | null }>;
-  requestOtp: (email: string) => Promise<void>;
+  verifyOtp: (phone: string, token: string) => Promise<{ user: User | null; session: Session | null }>;
+  requestOtp: (phone: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -83,10 +83,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (phone: string, password: string, firstName: string, lastName: string) => {
     try {
+      // Format phone number to E.164 format if not already formatted
+      const formattedPhone = formatPhoneNumber(phone);
+      
       const { data, error } = await supabase.auth.signUp({
-        email,
+        phone: formattedPhone,
         password,
         options: {
           data: {
@@ -102,11 +105,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.user) {
         // Request OTP after signup
-        await requestOtp(email);
+        await requestOtp(formattedPhone);
         
         toast({
           title: "Registration successful",
-          description: "Please check your email for the verification code.",
+          description: "Please check your phone for the verification code.",
         });
       }
     } catch (error: any) {
@@ -119,10 +122,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (phone: string, password: string) => {
     try {
+      const formattedPhone = formatPhoneNumber(phone);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        phone: formattedPhone,
         password,
       });
 
@@ -193,13 +198,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // New method to request OTP via email
-  const requestOtp = async (email: string) => {
+  // Format phone number to E.164 format (required by Supabase)
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove any non-numeric characters
+    let cleaned = phone.replace(/\D/g, '');
+    
+    // Add + prefix if not present
+    if (!cleaned.startsWith('+')) {
+      // Assume it's a US number if no country code is provided
+      if (cleaned.length === 10) {
+        cleaned = '+1' + cleaned;
+      } else {
+        cleaned = '+' + cleaned;
+      }
+    }
+    
+    return cleaned;
+  };
+
+  // Method to request OTP via phone
+  const requestOtp = async (phone: string) => {
     try {
+      const formattedPhone = formatPhoneNumber(phone);
+      
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        phone: formattedPhone,
         options: {
-          // This creates an OTP that can only be used for verification, not login
           shouldCreateUser: false,
         }
       });
@@ -210,7 +234,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Verification code sent",
-        description: "Please check your email for the verification code.",
+        description: "Please check your phone for the verification code.",
       });
     } catch (error: any) {
       toast({
@@ -222,13 +246,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // New method to verify OTP
-  const verifyOtp = async (email: string, token: string) => {
+  // Method to verify OTP
+  const verifyOtp = async (phone: string, token: string) => {
     try {
+      const formattedPhone = formatPhoneNumber(phone);
+      
       const { data, error } = await supabase.auth.verifyOtp({
-        email,
+        phone: formattedPhone,
         token,
-        type: 'email',
+        type: 'sms',
       });
 
       if (error) {
@@ -236,8 +262,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast({
-        title: "Email verified",
-        description: "Your email has been successfully verified.",
+        title: "Phone verified",
+        description: "Your phone has been successfully verified.",
       });
 
       return data;
