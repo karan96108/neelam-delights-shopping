@@ -2,223 +2,168 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, profile, signOut, updateProfile, isLoading } = useAuth();
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { user, profile, isLoading, signOut, updateProfile } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
   
-  // Form state
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    phone_number: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: ''
-  });
+  // Form states
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
 
-  // Redirect if not logged in
+  // Redirect if user is not logged in
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/auth');
     }
   }, [user, isLoading, navigate]);
 
-  // Update form data when profile is loaded
+  // Load profile data
   useEffect(() => {
     if (profile) {
-      setFormData({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        phone_number: profile.phone_number || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        pincode: profile.pincode || ''
-      });
+      setFirstName(profile.first_name || '');
+      setLastName(profile.last_name || '');
+      setEmail(user?.email || '');
+      setPhone(profile.phone || '');
+      setAddress(profile.address || '');
     }
-  }, [profile]);
+  }, [profile, user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsUpdating(true);
+    setIsSaving(true);
     
     try {
-      await updateProfile(formData);
+      await updateProfile({
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        address,
+      });
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
     } catch (error) {
-      console.error('Update error:', error);
+      console.error('Profile update error:', error);
+      toast({
+        title: "Update failed",
+        description: "There was a problem updating your profile.",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false);
+      setIsSaving(false);
     }
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-16 px-4 text-center">
-        <p>Loading...</p>
+      <div className="container max-w-3xl mx-auto pt-32 pb-16 px-4 text-center">
+        <p>Loading profile...</p>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-4xl mx-auto pt-32 pb-16 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-serif font-bold">My Account</h1>
-        <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
-      </div>
-      
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="orders">Order History</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">Personal Information</CardTitle>
-              <CardDescription>
-                Update your personal details and address information.
-              </CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Basic Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="first_name">First Name</Label>
-                      <Input 
-                        id="first_name" 
-                        name="first_name"
-                        value={formData.first_name}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="last_name">Last Name</Label>
-                      <Input 
-                        id="last_name" 
-                        name="last_name"
-                        value={formData.last_name}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input 
-                        id="email" 
-                        value={user?.email || ''}
-                        disabled
-                        className="bg-gray-100"
-                      />
-                      <p className="text-xs text-gray-500">Email cannot be changed</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone_number">Phone Number</Label>
-                      <Input 
-                        id="phone_number" 
-                        name="phone_number"
-                        value={formData.phone_number}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Address</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Street Address</Label>
-                      <Input 
-                        id="address" 
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input 
-                          id="city" 
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="state">State</Label>
-                        <Input 
-                          id="state" 
-                          name="state"
-                          value={formData.state}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="pincode">Pincode</Label>
-                        <Input 
-                          id="pincode" 
-                          name="pincode"
-                          value={formData.pincode}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" disabled={isUpdating}>
-                  {isUpdating ? "Saving..." : "Save Changes"}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="orders">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">Order History</CardTitle>
-              <CardDescription>
-                View your past orders and their status.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-gray-500">You don't have any orders yet.</p>
-                <Button variant="outline" className="mt-4" onClick={() => navigate('/products')}>
-                  Browse Products
-                </Button>
+    <div className="container max-w-3xl mx-auto pt-32 pb-16 px-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-serif">Your Profile</CardTitle>
+          <CardDescription>
+            Manage your account information.
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleUpdateProfile}>
+          <CardContent className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium">Account Information</h3>
+              <p className="text-sm text-muted-foreground">
+                Update your personal information.
+              </p>
+            </div>
+            <Separator />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input 
+                  id="firstName" 
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input 
+                  id="lastName" 
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={email}
+                disabled
+              />
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input 
+                id="phone" 
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input 
+                id="address" 
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col sm:flex-row gap-3">
+            <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleSignOut}
+              className="w-full sm:w-auto"
+            >
+              Sign Out
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 };

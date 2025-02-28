@@ -60,7 +60,11 @@ const Auth = () => {
     
     try {
       await signUp(registerEmail, registerPassword, firstName, lastName);
-      // We don't navigate here because the user needs to confirm their email
+      // Don't navigate - user needs to confirm their email
+      toast({
+        title: "Registration successful",
+        description: "Please check your email for the confirmation link.",
+      });
     } catch (error) {
       console.error('Registration error:', error);
     } finally {
